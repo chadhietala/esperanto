@@ -1,5 +1,5 @@
 /*
-	esperanto.js v0.6.17 - 2015-03-01
+	esperanto.js v0.6.17 - 2015-03-17
 	http://esperantojs.org
 
 	Released under the MIT License.
@@ -522,7 +522,10 @@ function getStandaloneModule ( options ) {var $D$0;
 		});
 	}
 
-	determineImportNames( imports, options.getModuleName, conflicts );
+	var importNames = determineImportNames( imports, options.getModuleName, conflicts );
+
+	// Determine export names
+	//console.log(exports);
 
 	return mod;
 ;$D$0 = void 0}
@@ -590,6 +593,9 @@ function determineImportNames ( imports, userFn, usedNames ) {
 			x.name = inferredNames[ x.path ];
 		}
 	});
+
+	return nameById;
+	console.log( 'named:', nameById);
 }
 
 function resolveId ( importPath, importerPath ) {
@@ -1617,6 +1623,8 @@ var warned = {};
 function packageResult ( bundleOrModule, body, options, methodName, isBundle ) {
 	var code, map;
 
+
+
 	// wrap output
 	if ( options.banner ) body.prepend( options.banner );
 	if ( options.footer ) body.append( options.footer );
@@ -1662,6 +1670,7 @@ function packageResult ( bundleOrModule, body, options, methodName, isBundle ) {
 	}
 
 	return {
+		deps: bundleOrModule.deps,
 		code: code,
 		map: map,
 		toString: function () {
@@ -2124,6 +2133,7 @@ function deconflict ( name, declared ) {
 function getImportSummary ( mod ) {
 	var importPaths = [], importNames = [], seen = {}, placeholders = 0;
 
+	debugger;
 	mod.imports.forEach( function(x ) {
 		if ( !hasOwnProp.call( seen, x.path ) ) {
 			importPaths.push( x.path );
@@ -2161,9 +2171,11 @@ function strictMode_amd__amd ( mod, options ) {var $D$4;
 		importNames.unshift( 'exports' );
 	}
 
+  var resolvedImports = ( options.absolutePaths ? importPaths.map( resolveAgainst( options.amdName ) ) : importPaths ).map( quote );
+
 	intro = strictMode_amd__introTemplate({
 		amdName: options.amdName ? (("'" + (options.amdName)) + "', ") : '',
-		paths: importPaths.length ? '[' + ( options.absolutePaths ? importPaths.map( resolveAgainst( options.amdName ) ) : importPaths ).map( quote ).join( ', ' ) + '], ' : '',
+		paths: importPaths.length ? '[' +  resolvedImports.join(', ') + '], ' : '',
 		names: importNames.join( ', ' )
 	}).replace( /\t/g, mod.body.getIndentString() );
 
@@ -2172,6 +2184,15 @@ function strictMode_amd__amd ( mod, options ) {var $D$4;
 		outro: '\n\n});',
 		_evilES3SafeReExports: options._evilES3SafeReExports
 	});
+
+	resolvedImports = resolvedImports.map(function(dep) {
+		return dep.replace(/'/g, '');
+	});
+
+	mod.deps = {
+    imports: resolvedImports,
+    exports: ['NOT IMPLEMENTED YET']
+	};
 
 	return packageResult( mod, mod.body, options, 'toAmd' );
 ;$D$4 = void 0}
@@ -2529,11 +2550,11 @@ function concat ( bundle, options ) {
 var deprecateMessage = 'options.defaultOnly has been deprecated, and is now standard behaviour. To use named imports/exports, pass `strict: true`.',
 	alreadyWarned = false;
 
-function transpileMethod ( format ) {
+function transpileMethod( format ) {
 	return function ( source ) {var options = arguments[1];if(options === void 0)options = {};
-		var mod,
-			body,
-			builder;
+		var body,
+			  mod,
+			  builder;
 
 		mod = getStandaloneModule({ source: source, getModuleName: options.getModuleName, strict: options.strict });
 

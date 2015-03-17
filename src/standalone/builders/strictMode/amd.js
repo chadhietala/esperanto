@@ -21,9 +21,11 @@ export default function amd ( mod, options ) {
 		importNames.unshift( 'exports' );
 	}
 
+  var resolvedImports = ( options.absolutePaths ? importPaths.map( resolveAgainst( options.amdName ) ) : importPaths ).map( quote );
+
 	intro = introTemplate({
 		amdName: options.amdName ? `'${options.amdName}', ` : '',
-		paths: importPaths.length ? '[' + ( options.absolutePaths ? importPaths.map( resolveAgainst( options.amdName ) ) : importPaths ).map( quote ).join( ', ' ) + '], ' : '',
+		paths: importPaths.length ? '[' +  resolvedImports.join(', ') + '], ' : '',
 		names: importNames.join( ', ' )
 	}).replace( /\t/g, mod.body.getIndentString() );
 
@@ -32,6 +34,15 @@ export default function amd ( mod, options ) {
 		outro: '\n\n});',
 		_evilES3SafeReExports: options._evilES3SafeReExports
 	});
+
+	resolvedImports = resolvedImports.map(function(dep) {
+		return dep.replace(/'/g, '');
+	});
+
+	mod.deps = {
+    imports: resolvedImports,
+    exports: ['NOT IMPLEMENTED YET']
+	};
 
 	return packageResult( mod, mod.body, options, 'toAmd' );
 }

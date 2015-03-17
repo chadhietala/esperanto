@@ -3,6 +3,7 @@ import hasOwnProp from 'utils/hasOwnProp';
 export default function getImportSummary ( mod ) {
 	var importPaths = [], importNames = [], seen = {}, placeholders = 0;
 
+	debugger;
 	mod.imports.forEach( x => {
 		if ( !hasOwnProp.call( seen, x.path ) ) {
 			importPaths.push( x.path );

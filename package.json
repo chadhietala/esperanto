@@ -36,6 +36,7 @@
   "scripts": {
     "build": "sh ./scripts/build.sh",
     "test": "mocha",
+    "test:debug": "mocha debug",
     "prepublish": "npm run build"
   }
 }

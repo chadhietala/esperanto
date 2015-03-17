@@ -11,11 +11,11 @@ import { getName } from 'utils/mappers';
 var deprecateMessage = 'options.defaultOnly has been deprecated, and is now standard behaviour. To use named imports/exports, pass `strict: true`.',
 	alreadyWarned = false;
 
-function transpileMethod ( format ) {
+function transpileMethod( format ) {
 	return function ( source, options = {} ) {
-		var mod,
-			body,
-			builder;
+		var body,
+			  mod,
+			  builder;
 
 		mod = getStandaloneModule({ source: source, getModuleName: options.getModuleName, strict: options.strict });
 

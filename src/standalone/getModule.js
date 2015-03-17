@@ -34,7 +34,10 @@ export default function getStandaloneModule ( options ) {
 		});
 	}
 
-	determineImportNames( imports, options.getModuleName, conflicts );
+	var importNames = determineImportNames( imports, options.getModuleName, conflicts );
+
+	// Determine export names
+	//console.log(exports);
 
 	return mod;
 }
@@ -102,4 +105,7 @@ function determineImportNames ( imports, userFn, usedNames ) {
 			x.name = inferredNames[ x.path ];
 		}
 	});
+
+	return nameById;
+	console.log( 'named:', nameById);
 }

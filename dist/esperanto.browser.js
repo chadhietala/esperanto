@@ -1,5 +1,5 @@
 /*
-	esperanto.js v0.6.17 - 2015-03-01
+	esperanto.js v0.6.17 - 2015-03-17
 	http://esperantojs.org
 
 	Released under the MIT License.
@@ -1379,7 +1379,10 @@
 			});
 		}
 
-		determineImportNames( imports, options.getModuleName, conflicts );
+		var importNames = determineImportNames( imports, options.getModuleName, conflicts );
+
+		// Determine export names
+		//console.log(exports);
 
 		return mod;
 	;$D$0 = void 0}
@@ -1447,6 +1450,9 @@
 				x.name = inferredNames[ x.path ];
 			}
 		});
+
+		return nameById;
+		console.log( 'named:', nameById);
 	}
 
 	function transformExportDeclaration ( declaration, body ) {
@@ -1496,6 +1502,8 @@
 	function packageResult ( bundleOrModule, body, options, methodName, isBundle ) {
 		var code, map;
 
+
+
 		// wrap output
 		if ( options.banner ) body.prepend( options.banner );
 		if ( options.footer ) body.append( options.footer );
@@ -1541,6 +1549,7 @@
 		}
 
 		return {
+			deps: bundleOrModule.deps,
 			code: code,
 			map: map,
 			toString: function () {
@@ -1771,12 +1780,12 @@
 
 		var intro =
 	(("(function (factory) {\
-\n		!(typeof exports === 'object' && typeof module !== 'undefined') &&\
-\n		typeof define === 'function' && define.amd ? define(" + amdName) + "factory) :\
-\n		factory()\
-\n	}(function () { 'use strict';\
+\n	!(typeof exports === 'object' && typeof module !== 'undefined') &&\
+\n	typeof define === 'function' && define.amd ? define(" + amdName) + "factory) :\
+\n	factory()\
+\n}(function () { 'use strict';\
 \n\
-\n	");
+\n");
 
 		return intro.replace( /\t/g, indentStr );
 	}
@@ -1803,12 +1812,12 @@
 
 		var intro =
 	(("(function (global, factory) {\
-\n		typeof exports === 'object' && typeof module !== 'undefined' ? " + cjsExport) + (" :\
-\n		typeof define === 'function' && define.amd ? define(" + amdName) + ("" + amdDeps) + ("factory) :\
-\n		" + globalExport) + ("\
-\n	}(this, function (" + args) + ") { 'use strict';\
+\n	typeof exports === 'object' && typeof module !== 'undefined' ? " + cjsExport) + (" :\
+\n	typeof define === 'function' && define.amd ? define(" + amdName) + ("" + amdDeps) + ("factory) :\
+\n	" + globalExport) + ("\
+\n}(this, function (" + args) + ") { 'use strict';\
 \n\
-\n	");
+\n");
 
 		return intro.replace( /\t/g, indentStr );
 	}
@@ -2247,6 +2256,7 @@
 	function getImportSummary ( mod ) {
 		var importPaths = [], importNames = [], seen = {}, placeholders = 0;
 
+		debugger;
 		mod.imports.forEach( function(x ) {
 			if ( !hasOwnProp.call( seen, x.path ) ) {
 				importPaths.push( x.path );
@@ -2284,9 +2294,11 @@
 			importNames.unshift( 'exports' );
 		}
 
+	  var resolvedImports = ( options.absolutePaths ? importPaths.map( resolveAgainst( options.amdName ) ) : importPaths ).map( quote );
+
 		intro = strictMode_amd__introTemplate({
 			amdName: options.amdName ? (("'" + (options.amdName)) + "', ") : '',
-			paths: importPaths.length ? '[' + ( options.absolutePaths ? importPaths.map( resolveAgainst( options.amdName ) ) : importPaths ).map( quote ).join( ', ' ) + '], ' : '',
+			paths: importPaths.length ? '[' +  resolvedImports.join(', ') + '], ' : '',
 			names: importNames.join( ', ' )
 		}).replace( /\t/g, mod.body.getIndentString() );
 
@@ -2295,6 +2307,15 @@
 			outro: '\n\n});',
 			_evilES3SafeReExports: options._evilES3SafeReExports
 		});
+
+		resolvedImports = resolvedImports.map(function(dep) {
+			return dep.replace(/'/g, '');
+		});
+
+		mod.deps = {
+	    imports: resolvedImports,
+	    exports: ['NOT IMPLEMENTED YET']
+		};
 
 		return packageResult( mod, mod.body, options, 'toAmd' );
 	;$D$2 = void 0}
@@ -2350,17 +2371,17 @@
 			defaultsBlock = options.externalDefaults.map( function(x )
 				{return '\t' + ( x.needsNamed ? (("var " + (x.name)) + "__default") : x.name ) +
 					((" = ('default' in " + (x.name)) + (" ? " + (x.name)) + ("['default'] : " + (x.name)) + ");")}
-			).join('\n') + '\n\n';
+		).join('\n') + '\n\n';
 		}
 
 		var intro =
 	(("(function (global, factory) {\
-\n		typeof exports === 'object' && typeof module !== 'undefined' ? factory(" + cjsDeps) + (") :\
-\n		typeof define === 'function' && define.amd ? define(" + amdName) + ("" + amdDeps) + ("factory) :\
-\n		factory(" + globalDeps) + (")\
-\n	}(this, function (" + args) + (") { 'use strict';\
+\n	typeof exports === 'object' && typeof module !== 'undefined' ? factory(" + cjsDeps) + (") :\
+\n	typeof define === 'function' && define.amd ? define(" + amdName) + ("" + amdDeps) + ("factory) :\
+\n	factory(" + globalDeps) + (")\
+\n}(this, function (" + args) + (") { 'use strict';\
 \n\
-\n	" + defaultsBlock) + "");
+\n" + defaultsBlock) + "");
 
 		return intro.replace( /\t/g, indentStr );
 	}
@@ -2652,11 +2673,11 @@
 	var deprecateMessage = 'options.defaultOnly has been deprecated, and is now standard behaviour. To use named imports/exports, pass `strict: true`.',
 		alreadyWarned = false;
 
-	function transpileMethod ( format ) {
+	function transpileMethod( format ) {
 		return function ( source ) {var options = arguments[1];if(options === void 0)options = {};
-			var mod,
-				body,
-				builder;
+			var body,
+				  mod,
+				  builder;
 
 			mod = getStandaloneModule({ source: source, getModuleName: options.getModuleName, strict: options.strict });
 
