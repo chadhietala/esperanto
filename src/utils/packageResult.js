@@ -6,8 +6,6 @@ var warned = {};
 export default function packageResult ( bundleOrModule, body, options, methodName, isBundle ) {
 	var code, map;
 
-
-
 	// wrap output
 	if ( options.banner ) body.prepend( options.banner );
 	if ( options.footer ) body.append( options.footer );

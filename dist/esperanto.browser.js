@@ -1,5 +1,5 @@
 /*
-	esperanto.js v0.6.17 - 2015-03-17
+	esperanto.js v0.6.17 - 2015-05-15
 	http://esperantojs.org
 
 	Released under the MIT License.
@@ -1379,10 +1379,7 @@
 			});
 		}
 
-		var importNames = determineImportNames( imports, options.getModuleName, conflicts );
-
-		// Determine export names
-		//console.log(exports);
+		determineImportNames( imports, options.getModuleName, conflicts );
 
 		return mod;
 	;$D$0 = void 0}
@@ -1452,7 +1449,6 @@
 		});
 
 		return nameById;
-		console.log( 'named:', nameById);
 	}
 
 	function transformExportDeclaration ( declaration, body ) {
@@ -1501,8 +1497,6 @@
 
 	function packageResult ( bundleOrModule, body, options, methodName, isBundle ) {
 		var code, map;
-
-
 
 		// wrap output
 		if ( options.banner ) body.prepend( options.banner );
@@ -2256,7 +2250,6 @@
 	function getImportSummary ( mod ) {
 		var importPaths = [], importNames = [], seen = {}, placeholders = 0;
 
-		debugger;
 		mod.imports.forEach( function(x ) {
 			if ( !hasOwnProp.call( seen, x.path ) ) {
 				importPaths.push( x.path );
@@ -2294,7 +2287,7 @@
 			importNames.unshift( 'exports' );
 		}
 
-	  var resolvedImports = ( options.absolutePaths ? importPaths.map( resolveAgainst( options.amdName ) ) : importPaths ).map( quote );
+	  var resolvedImports = (options.absolutePaths ? importPaths.map( resolveAgainst( options.amdName ) ) : importPaths ).map( quote );
 
 		intro = strictMode_amd__introTemplate({
 			amdName: options.amdName ? (("'" + (options.amdName)) + "', ") : '',
@@ -2313,8 +2306,7 @@
 		});
 
 		mod.deps = {
-	    imports: resolvedImports,
-	    exports: ['NOT IMPLEMENTED YET']
+	    imports: resolvedImports
 		};
 
 		return packageResult( mod, mod.body, options, 'toAmd' );

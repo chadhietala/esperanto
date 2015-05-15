@@ -21,7 +21,7 @@ export default function amd ( mod, options ) {
 		importNames.unshift( 'exports' );
 	}
 
-  var resolvedImports = ( options.absolutePaths ? importPaths.map( resolveAgainst( options.amdName ) ) : importPaths ).map( quote );
+  var resolvedImports = (options.absolutePaths ? importPaths.map( resolveAgainst( options.amdName ) ) : importPaths ).map( quote );
 
 	intro = introTemplate({
 		amdName: options.amdName ? `'${options.amdName}', ` : '',
@@ -40,8 +40,7 @@ export default function amd ( mod, options ) {
 	});
 
 	mod.deps = {
-    imports: resolvedImports,
-    exports: ['NOT IMPLEMENTED YET']
+    imports: resolvedImports
 	};
 
 	return packageResult( mod, mod.body, options, 'toAmd' );
